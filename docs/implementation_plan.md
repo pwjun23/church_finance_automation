@@ -1,48 +1,47 @@
-# Implementation Plan - Church Finance Automation
+# 구현 계획 (Implementation Plan) - 교회 재정 자동화
 
-## Goal Description
-Automate the manual process of organizing church offerings, reducing work for the 4-person financial team. Move from local Files (Excel/Word) to a collaborative Google Sheets + Apps Script environment.
+## 목표 설명 (Goal Description)
+4명의 재무부 담당자가 수행하는 헌금 정리 업무를 자동화합니다. 기존의 개별 파일(Excel/Word) 방식에서 구글 스프레드시트와 Apps Script를 활용한 협업 환경으로 전환하여 작업 시간을 단축하고 오류를 줄입니다.
 
-## User Review Required
+## 사용자 검토 필요 (User Review Required)
 > [!IMPORTANT]
-> **Full Migration to Sheets Recommended**: The user proposed copying data back to Excel (`2026- 재정보고서.xlsx`). I recommend **fully migrating the reporting to Google Sheets** to eliminate this manual step. The plan below assumes we work primarily in Sheets, with optional Excel export if strictly necessary.
+> **구글 스프레드시트로의 완전한 전환 추천**: 사용자께서는 기존의 '재정보고서.xlsx' 엑셀 파일로 다시 데이터를 복사해 넣기를 원하셨습니다. 하지만 저는 **보고 과정까지 구글 스프레드시트 내에서 완전히 자동화**하여 이 수작업 단계를 없애는 것을 추천드립니다. 아래 계획은 스프레드시트 안에서 모든 작업이 해결되도록 설계되었습니다. (필요 시 엑셀 다운로드는 언제든 가능합니다)
 
-## Proposed Strategy
+## 제안된 전략
 
-### 1. Unified Database (Google Sheets)
-Instead of separate Word and Excel files, we will use a single "Master Spreadsheet" with the following structured tabs:
-- **`Dashboard`**: Main interface for users to run scripts (buttons) and see status.
-- **`Input_Bank`**: Raw import area for the Hana Bank Excel file.
-- **`Input_Manual`**: Entry form for physical offerings (Tithe, Thanksgiving, etc.), optimized for 4 concurrent users using specific ranges or a web form.
-- **`Data_General`**: Consolidated database for General accounts.
-- **`Data_Special`**: Consolidated database for Special accounts.
-- **`Report_Print`**: Auto-filled templates ready for printing (replacing the Word docs).
+### 1. 통합 데이터베이스 (Google Sheets)
+흩어진 Word/Excel 파일 대신 하나의 "마스터 스프레드시트"를 사용합니다.
+- **`Dashboard`**: 대시보드. 스크립트 실행 버튼과 현재 상태 확인.
+- **`Input_Bank`**: 하나은행 엑셀 파일을 붙여넣는 곳. (자동 인식)
+- **`Input_Manual`**: 오프라인 헌금(봉투) 수기 입력 폼. 4명이 동시 입력 가능.
+- **`Data_General`**: 일반 회계 데이터가 모이는 데이터베이스.
+- **`Data_Special`**: 특별 회계 데이터가 모이는 데이터베이스.
+- **`Report_Print`**: 자동으로 채워지는 출력용 보고서 양식 (Word 대체).
 
-### 2. Automation Logic (Google Apps Script)
+### 2. 자동화 로직 (Google Apps Script)
 
-#### Component: Bank Import (`ImportService.gs`)
-- **Function**: `processBankFile()`
-- **Logic**: Reads the uploaded/pasted Bank Excel data. Filters for relevant transaction types. Auto-matches names to registered church members if a member DB exists.
+#### 컴포넌트: 은행 자료 가져오기 (`BankImport.gs`)
+- **기능**: `processBankFile()`
+- **로직**: 업로드된 은행 데이터를 읽어 날짜, 이름, 금액을 추출합니다. 등록된 교인 명단이 있다면 자동으로 이름을 매칭합니다.
 
-#### Component: Data Entry & Processing (`EntryService.gs`)
-- **Function**: `aggregateData()`
-- **Logic**: Combines 'Online' (Bank) and 'Offline' (Manual) data. Categorizes them (General/Special). Appends clean records to `Data_General` and `Data_Special`.
+#### 컴포넌트: 데이터 입력 및 처리 (`DataEntry.gs`)
+- **기능**: `submitManualEntry()`
+- **로직**: '온라인(은행)' 데이터와 '오프라인(수기)' 데이터를 처리하여 각각 일반/특별 회계 DB에 저장합니다.
 
-#### Component: Reporting (`ReportService.gs`)
-- **Function**: `generateWeeklyReport()`
-- **Logic**: Calculates subtotals (Cash, Checks, Online). Fills the `Report_Print` tab.
-- **Output**: Can export to PDF or print directly.
+#### 컴포넌트: 보고서 생성 (`Reporting.gs`)
+- **기능**: `generateReport()`
+- **로직**: 주간 데이터를 취합하여 현금, 수표, 온라인 이체별 부분합을 계산합니다. `Report_Print` 탭에 인쇄 가능한 형태로 결과를 출력합니다.
 
-## Workflow Optimization
-| Current Step | Automated Step |
+## 워크플로우 최적화 (Workflow Optimization)
+| 현재 단계 | 자동화된 단계 |
 | :--- | :--- |
-| Login & Download Bank Excel | *Still Manual (Security)* - but file is just dropped into Drive/Sheet. |
-| Re-type into Word (Deposit Statement) | **Automated**: Script parses Bank Excel & generates Statement. |
-| Manual Count & Classification | Manual Count needed, but entry is direct into Sheet Forms. |
-| Re-type into Final Excel | **Automated**: Data flows from Input -> Final Report tabs automatically. |
-| Calculate Subtotals | **Automated**: Formulas/Pivot Tables handle all math. |
+| 은행 접속 및 엑셀 다운로드 | *여전히 수동 (보안상 불가)* - 단, 파일만 시트에 넣으면 끝. |
+| 재무입금내역서(Word) 재입력 | **자동화**: 스크립트가 은행 파일을 읽어 자동으로 내역서 생성. |
+| 헌금 계수 및 분류 | 계수는 수동이지만, 입력은 전용 폼에 바로 입력하여 자동 분류. |
+| 최종 엑셀 파일에 재입력 | **자동화**: 입력된 데이터가 최종 보고서 탭으로 자동 연결. |
+| 부분합 및 총합 계산 | **자동화**: 수식과 스크립트가 모든 계산을 자동 처리. |
 
-## Verification Plan
-### Automated Tests
-- Create mock "Bank Export" data to test the parser.
-- Verify sums match (Total Input = General Total + Special Total).
+## 검증 계획 (Verification Plan)
+### 자동화 테스트
+- '모의 은행 데이터'를 만들어 파싱이 정확한지 테스트.
+- 입력된 총합이 (일반 회계 합 + 특별 회계 합)과 일치하는지 검증.
