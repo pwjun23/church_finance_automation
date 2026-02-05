@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>교회 헌금 입력</title>
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    /* Header - Type Selection */
+    .header {
+      background: var(--surface);
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    select {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: bold;
+    }
+    
+    /* Main Content */
+    .content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    
+    /* Form Group */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #64748b;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-sizing: border-box; 
+    }
+    
+    /* Amount Display */
+    .amount-display {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: right;
+      padding: 16px;
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+    
+    /* Button Grid */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .money-btn {
+      padding: 12px 4px;
+      font-size: 15px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .money-btn:active { background: #e2e8f0; }
+    .money-btn.plus { color: blue; }
+    .money-btn.minus { color: red; }
+    
+    /* Save Button */
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 24px;
+      cursor: pointer;
+    }
+    .save-btn:disabled { background: #94a3b8; }
+    
+    /* List Section */
+    .list-section {
+      margin-top: 32px;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .list-header {
+      font-size: 14px;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .list-footer {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <select id="offeringType" onchange="refreshList()">
+      <optgroup label="일반 회계">
+        <option value="십일조">십일조</option>
+        <option value="감사">감사 헌금</option>
+        <option value="주일">주일 헌금</option>
+        <option value="주일(아동부)">주일(아동부)</option>
+      </optgroup>
+      <optgroup label="특별 회계">
+        <option value="선교">선교 헌금</option>
+        <option value="건축">건축 헌금</option>
+        <option value="장학">장학 헌금</option>
+        <option value="일천번제">일천번제</option>
+        <option value="특별">특별 헌금</option>
+        <option value="목적">목적 헌금</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="content">
+    <div class="form-group">
+      <input type="date" id="dateMsg" onchange="refreshList()">
+    </div>
+  
+    <div class="form-group">
+      <label>이름 (복수 입력 가능, 쉼표 구분)</label>
+      <input type="text" id="nameInput" placeholder="예: 홍길동, 이순신">
+    </div>
+
+    <div class="form-group">
+      <label>금액 입력 (단위: 원)</label>
+      <div class="amount-display" id="amountDisplay">0</div>
+      
+      <div class="btn-grid">
+        <!-- Add Buttons -->
+        <!-- High to Low as requested -->
+        <button class="money-btn plus" onclick="addMoney(100000)">+10만</button>
+        <button class="money-btn plus" onclick="addMoney(50000)">+5만</button>
+        <button class="money-btn plus" onclick="addMoney(10000)">+1만</button>
+        
+        <button class="money-btn plus" onclick="addMoney(5000)">+5천</button>
+        <button class="money-btn plus" onclick="addMoney(1000)">+1천</button>
+        <button class="money-btn plus" onclick="addMoney(500)">+500</button>
+        
+        <!-- Subtract Buttons -->
+         <button class="money-btn minus" onclick="addMoney(-100000)">-10만</button>
+        <button class="money-btn minus" onclick="addMoney(-50000)">-5만</button>
+        <button class="money-btn minus" onclick="addMoney(-10000)">-1만</button>
+        
+        <button class="money-btn" onclick="resetMoney()" style="background:#fee2e2; color:#ef4444">초기화</button>
+        <!-- Spacer or other unit -->
+      </div>
+    </div>
+
+    <button id="saveBtn" class="save-btn" onclick="submitForm()">저장하기</button>
+
+    <!-- List Section -->
+    <div class="list-section">
+      <div class="list-header">
+        <span>최근 입력 목록</span>
+        <span id="listCount">0건</span>
+      </div>
+      <div id="entryList">
+        <!-- List items go here -->
+      </div>
+      <div class="list-footer">
+        <span>합계 {전체}</span>
+        <span id="totalAmount">0</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let currentAmount = 0;
+
+  // Initialize
+  window.onload = function() {
+    document.getElementById('dateMsg').valueAsDate = new Date();
+    refreshList();
+  };
+
+  function addMoney(val) {
+    currentAmount += val;
+    if (currentAmount < 0) currentAmount = 0;
+    updateAmountDisplay();
+  }
+
+  function resetMoney() {
+    currentAmount = 0;
+    updateAmountDisplay();
+  }
+
+  function updateAmountDisplay() {
+    document.getElementById('amountDisplay').innerText = currentAmount.toLocaleString();
+  }
+
+  function submitForm() {
+    const btn = document.getElementById('saveBtn');
+    const name = document.getElementById('nameInput').value;
+    const date = document.getElementById('dateMsg').value;
+    const type = document.getElementById('offeringType').value;
+    
+    if (!name || currentAmount <= 0) {
+      alert("이름과 금액을 확인해 주세요.");
+      return;
+    }
+
+    // Disable button
+    btn.disabled = true;
+    btn.innerText = "저장 중...";
+
+    const payload = {
+      date: date,
+      name: name,
+      type: type,
+      amount: currentAmount
+    };
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        // Reset Form
+        document.getElementById('nameInput').value = '';
+        resetMoney();
+        btn.disabled = false;
+        btn.innerText = "저장하기";
+        
+        refreshList(); // Update list immediately
+      })
+      .withFailureHandler(function(err) {
+        alert("저장 실패: " + err);
+        btn.disabled = false;
+        btn.innerText = "저장하기";
+      })
+      .processMobileForm(payload);
+  }
+
+  function refreshList() {
+    const date = document.getElementById('dateMsg').value;
+    const type = document.getElementById('offeringType').value;
+    const listDiv = document.getElementById('entryList');
+    
+    listDiv.innerHTML = '<div style="text-align:center; color:#ccc;">로딩 중...</div>';
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        renderList(data);
+      })
+      .getEntriesList(date, type);
+  }
+
+  function renderList(data) {
+    const listDiv = document.getElementById('entryList');
+    listDiv.innerHTML = '';
+
+    if (data.entries.length === 0) {
+      listDiv.innerHTML = '<div style="text-align:center; color:#ccc; padding:10px;">입력 내역 없음</div>';
+    } else {
+      data.entries.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <span>${item.name}</span>
+          <span>${Number(item.amount).toLocaleString()}</span>
+        `;
+        listDiv.appendChild(div);
+      });
+    }
+
+    // Update Counts and Totals
+    document.getElementById('listCount').innerText = data.entries.length + "건";
+    // Format: "150,000 ({150,000})" as per request "{Total}({CashTotal})"
+    // Since user assumes all is cash here:
+    const fmtTotal = Number(data.total).toLocaleString();
+    document.getElementById('totalAmount').innerText = `${fmtTotal} (${fmtTotal})`;
+  }
+</script>
+</body>
+</html>
